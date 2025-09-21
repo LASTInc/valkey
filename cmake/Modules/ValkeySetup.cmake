@@ -1,6 +1,7 @@
 include(CheckIncludeFiles)
 include(ProcessorCount)
 include(Utils)
+include(RustIntegrate)
 
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
@@ -73,6 +74,8 @@ endmacro ()
 # and `link_name`
 macro (valkey_build_and_install_bin target sources ld_flags libs link_name)
     add_executable(${target} ${sources})
+    add_dependencies(${target} built_rust)
+    add_dependencies(${target} copy_rust_lib)
 
     if (USE_JEMALLOC
         OR USE_TCMALLOC
@@ -84,6 +87,8 @@ macro (valkey_build_and_install_bin target sources ld_flags libs link_name)
     # Place this line last to ensure that ${ld_flags} is placed last on the linker line
     target_link_libraries(${target} ${libs} ${ld_flags})
     target_link_libraries(${target} valkey::valkey)
+    find_library(rust_src ${RUST_LIBRARY})
+    target_link_libraries(${target} ${RUST_STATIC_LIBRARY})
     if (USE_TLS)
         # Add required libraries needed for TLS
         target_link_libraries(${target} OpenSSL::SSL valkey::valkey_tls)
